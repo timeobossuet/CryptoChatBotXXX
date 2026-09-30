@@ -1,4 +1,4 @@
-package org.example;
+package org.cryptochatbotxxx;
 
 /**
  * Hello world!
