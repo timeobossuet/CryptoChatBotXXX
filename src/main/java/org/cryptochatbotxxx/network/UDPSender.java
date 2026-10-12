@@ -12,8 +12,8 @@ public class UDPSender {
     /**
      * Envoi une demande de découverte sur le réseau local via UDP pour savoir qui est connecté.
      */
-    public void broadcastPresence(String name) {
-        byte[] buf = name.getBytes(StandardCharsets.UTF_8); // Allocation du buffer
+    public void broadcastPresence(String userName) {
+        byte[] buf = userName.getBytes(StandardCharsets.UTF_8); // Allocation du buffer
         try (DatagramSocket socket = new DatagramSocket()) { // garantit la fermeture du socket même en cas d'erreur
             socket.setBroadcast(true);
             InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
@@ -25,5 +25,21 @@ public class UDPSender {
         }
     }
 
+
+    /**
+     * Envoi une demande de découverte sur le réseau local via UDP pour savoir qui est connecté.
+     */
+    public void sendMessage(String adress, String message) {
+        byte[] buf = message.getBytes(StandardCharsets.UTF_8); // Allocation du buffer
+        try (DatagramSocket socket = new DatagramSocket()) { // garantit la fermeture du socket même en cas d'erreur
+            socket.setBroadcast(true);
+            InetAddress broadcastAddress = InetAddress.getByName(adress);
+            DatagramPacket packet = new DatagramPacket(buf, BUF_SIZE, broadcastAddress, PORT);
+            socket.send(packet);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Erreur inattendue lors du broadcast", e);
+        }
+    }
 
 }

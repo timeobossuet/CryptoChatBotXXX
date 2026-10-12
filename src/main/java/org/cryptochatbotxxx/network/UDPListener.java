@@ -1,15 +1,13 @@
 package org.cryptochatbotxxx.network;
 
-import java.net.InetAddress;
-import java.net.DatagramSocket;
-import java.nio.charset.StandardCharsets;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 public class UDPListener {
 
     public final int PORT = 19132;
 
-    public static class presenceListener {
+    public void presenceListener() {
         try{
             DatagramSocket socket = new DatagramSocket(PORT); // On which port is the server listening? ;
             boolean running = true;
