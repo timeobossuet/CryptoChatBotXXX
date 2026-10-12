@@ -1,0 +1,85 @@
+Machine à états du ControleurSession
+@startuml
+title Machine à États - ControleurSession
+skinparam state {
+    BackgroundColor White
+    BorderColor DarkCyan
+    ArrowColor Teal
+}
+
+[*] --> Initialisation
+
+Initialisation : entry / instancier(GestionnaireReseau, HistoriqueDB, VuePrincipale)
+Initialisation --> EnAttentePseudo : initialisation terminée
+
+state EnAttentePseudo {
+    EnAttentePseudo : entry / demanderSaisie() -> VuePrincipale
+}
+
+EnAttentePseudo --> VerificationUnicite : [VuePrincipale : pseudo saisi] / lancerVerification(pseudo)
+
+state VerificationUnicite {
+    VerificationUnicite : entry / broadcastPresence(pseudo) -> GestionnaireReseau <<Asynchrone>>
+}
+
+VerificationUnicite --> EnAttentePseudo : onPseudoConflict(pseudo) <<Asynchrone>> / afficherErreur() -> VuePrincipale
+VerificationUnicite --> Connecte : after(3s) [pseudo libre] / validerConfiguration()
+
+state Connecte {
+    [*] --> AttenteEvenements
+    
+    AttenteEvenements --> TraitementEnvoi : [VuePrincipale : envoi message]
+    TraitementEnvoi : entry / sauvegarder(msg) -> HistoriqueDB <<Synchrone>>
+    TraitementEnvoi : do / envoyerTCP(msg) -> GestionnaireReseau <<Asynchrone>>
+    TraitementEnvoi --> AttenteEvenements : majAffichage(msg) -> VuePrincipale
+    
+    AttenteEvenements --> OuvertureSession : [VuePrincipale : clic utilisateur distant]
+    OuvertureSession : entry / recupererHistorique(distant) -> HistoriqueDB <<Synchrone>>
+    OuvertureSession --> AttenteEvenements : afficherSession(historique) -> VuePrincipale
+    
+    AttenteEvenements --> TraitementReception : onMessageReceived(msg) <<Asynchrone>>
+    TraitementReception : entry / sauvegarder(msg) -> HistoriqueDB <<Synchrone>>
+    TraitementReception --> AttenteEvenements : afficherNouveauMessage(msg) -> VuePrincipale
+    
+    AttenteEvenements --> AttenteEvenements : onUserConnected(user) / rafraichirListe() -> VuePrincipale
+    AttenteEvenements --> AttenteEvenements : onUserDisconnected(user) / rafraichirListe() -> VuePrincipale
+    AttenteEvenements --> VerificationUnicite : [VuePrincipale : modifier pseudo] / broadcastPresence(nouveauPseudo)
+}
+
+Connecte --> [*] : [VuePrincipale : fermer agent] / arreterReseau()
+@enduml
+Machine à états du GestionnaireReseau
+@startuml
+title Machine à États - GestionnaireReseau
+skinparam state {
+    BackgroundColor White
+    BorderColor DarkCyan
+    ArrowColor Teal
+}
+
+[*] --> Arrete
+
+Arrete --> EnEcoute : demarrerEcoute() / initialiserSockets()
+
+state EnEcoute {
+    [*] --> ScrutationSockets
+    
+    ScrutationSockets --> EmissionDonnees : [ControleurSession : envoyerMessage() ou broadcast()]
+    EmissionDonnees : entry / ecrireTrameSurSocket() <<Réseau Physique>>
+    EmissionDonnees --> ScrutationSockets : fin d'émission
+    
+    ScrutationSockets --> ReceptionDonnees : [Réseau Physique : paquet TCP/UDP entrant]
+    ReceptionDonnees : entry / decoderPaquet()
+    
+    state choix_notification <<choice>>
+    ReceptionDonnees --> choix_notification
+    
+    choix_notification --> ScrutationSockets : [type == Message] / onMessageReceived() -> ControleurSession <<Asynchrone>>
+    choix_notification --> ScrutationSockets : [type == AnnonceUser] / onUserConnected() -> ControleurSession <<Asynchrone>>
+    choix_notification --> ScrutationSockets : [type == ConflitPseudo] / onPseudoConflict() -> ControleurSession <<Asynchrone>>
+    choix_notification --> ScrutationSockets : [type == DepartUser] / onUserDisconnected() -> ControleurSession <<Asynchrone>>
+}
+
+EnEcoute --> Arrete : arreterEcoute() / fermerSockets()
+Arrete --> [*]
+@enduml

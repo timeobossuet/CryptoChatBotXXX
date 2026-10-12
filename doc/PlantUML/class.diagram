@@ -1,0 +1,108 @@
+@startuml
+title TD8 - Diagramme de Classes (Boîte Blanche)
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    ArrowColor Teal
+    BorderColor DarkCyan
+}
+
+' ==========================================
+' Interfaces
+' ==========================================
+interface INetworkListener {
+    + onMessageReceived(msg: Message) : void
+    + onUserConnected(user: Utilisateur) : void
+    + onUserDisconnected(user: Utilisateur) : void
+    + onPseudoConflict(pseudo: String) : void
+}
+
+interface IViewListener {
+    + onSendMessage(texte: String, dest: Utilisateur) : void
+    + onChangePseudo(newPseudo: String) : boolean
+    + onStartSession(user: Utilisateur) : void
+}
+
+' ==========================================
+' Classes Passives (Entités & Données)
+' ==========================================
+class Utilisateur {
+    - pseudonyme : String
+    - adresseIP : String
+    - estActif : boolean
+    + getPseudonyme() : String
+    + setPseudonyme(pseudo: String) : void
+    + getAdresseIP() : String
+}
+
+class Message {
+    - id : int
+    - contenu : String
+    - horodatage : Date
+    - expediteur : Utilisateur
+    - type : EnumTypeMessage
+    + getContenu() : String
+    + getHorodatage() : Date
+}
+
+class HistoriqueDB {
+    - cheminFichier : String
+    + sauvegarderMessage(msg: Message) : boolean
+    + recupererHistorique(user: Utilisateur) : List<Message>
+    + purgerHistorique() : void
+}
+
+' ==========================================
+' Classes Actives (Logique et Réseau)
+' ==========================================
+class ControleurSession <<Actif>> {
+    - utilisateurLocal : Utilisateur
+    - sessionsActives : List<Utilisateur>
+    + initialiserSysteme() : void
+    + verifierUnicitePseudo(pseudo: String) : boolean
+    + fermerSession(user: Utilisateur) : void
+}
+
+class GestionnaireReseau <<Actif>> {
+    - portTCP : int = 1234
+    - portUDP : int = 5678
+    - isRunning : boolean
+    + demarrerEcoute() : void
+    + envoyerMessage(msg: Message, destIP: String) : void
+    + broadcastPresence(pseudo: String) : void
+    + broadcastPseudoChange(oldPseudo: String, newPseudo: String) : void
+}
+
+' ==========================================
+' Classe d'Interface (IHM)
+' ==========================================
+class VuePrincipale {
+    + afficherErreur(msg: String) : void
+    + afficherMessage(msg: Message) : void
+    + rafraichirListeUtilisateurs(liste: List<Utilisateur>) : void
+    + reduireAgent() : void
+}
+
+' ==========================================
+' Relations
+' ==========================================
+
+' Implémentation des interfaces
+ControleurSession ..|> INetworkListener
+ControleurSession ..|> IViewListener
+
+' Composition (Le contrôleur gère le cycle de vie de ces composants)
+ControleurSession *-- "1" GestionnaireReseau : gère >
+ControleurSession *-- "1" HistoriqueDB : utilise >
+ControleurSession *-- "1" VuePrincipale : met à jour >
+
+' Associations
+ControleurSession o-- "*" Utilisateur : "connaît (actifs)"
+VuePrincipale o-- IViewListener : "notifie"
+GestionnaireReseau o-- INetworkListener : "notifie"
+
+Message "*" --> "1" Utilisateur : "expédié par"
+HistoriqueDB ..> Message : <<manipule>>
+GestionnaireReseau ..> Message : <<transporte>>
+
+@enduml

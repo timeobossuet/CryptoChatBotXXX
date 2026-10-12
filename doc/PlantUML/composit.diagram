@@ -1,0 +1,41 @@
+@startuml
+title TD9 - Diagramme de Structure Composite (Agent Local)
+skinparam componentStyle rectangle
+skinparam component {
+    BackgroundColor White
+    BorderColor DarkCyan
+    ArrowColor Teal
+}
+
+actor "Utilisateur Physique" as User
+cloud "Réseau de Télécommunications\n(LAN / Internet)" as Network
+
+component "Système : Agent Logiciel" <<system>> {
+    ' Ports vers l'extérieur
+    port "Port IHM" as pUI
+    port "Sockets Réseau" as pNet
+    
+    ' Instances internes
+    component "ihm : VuePrincipale" as vue
+    component "ctrl : ControleurSession" as ctrl
+    component "net : GestionnaireReseau" as net
+    component "db : HistoriqueDB" as db
+    
+    ' Connexions internes
+    pUI -right- vue
+    
+    vue -right- ctrl : <<Synchrone>>\nAppels de méthodes
+    
+    ctrl -down- db : <<Synchrone>>\nRequêtes locales
+    
+    ' Connecteur avec interface pour l'asynchronisme interne
+    ctrl -(0- net : INetworkListener\n<<Asynchrone>>\nÉcoute d'événements
+    
+    net -right- pNet
+}
+
+' Interactions asynchrones avec l'extérieur
+User <..> pUI : <<Asynchrone>>\nÉvénements (Clics, Frappes)
+pNet <..> Network : <<Asynchrone>>\nFlux UDP / TCP
+
+@enduml

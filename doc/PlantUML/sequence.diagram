@@ -1,0 +1,125 @@
+Cas d'utilisation 1 : Gérer son pseudonyme (avec vérification d'unicité)
+
+@startuml
+title CU1 - Choix et vérification du pseudonyme (Boîte Blanche)
+
+actor Utilisateur as User
+participant "IHM" as UI
+participant "Controleur" as Ctrl
+participant "GestionnaireReseau" as Net
+participant "Agents Distants" as Remote
+
+User -> UI : Saisir pseudo (ex: "Alice")
+activate UI
+UI -> Ctrl : verifierUnicitePseudo("Alice")
+activate Ctrl
+
+Ctrl -> Net : diffuserDemandeUnicite("Alice")
+activate Net
+Net ->> Remote : Broadcast réseau (Asynchrone)
+deactivate Net
+
+note over Ctrl, Remote
+  Le système écoute les réponses potentielles
+  pendant un délai maximum de 3 secondes [CdC-Bs-24]
+end note
+
+alt Pseudo déjà utilisé
+    Remote -->> Net : notificationConflit()
+    activate Net
+    Net -> Ctrl : pseudoRefuse()
+    deactivate Net
+    Ctrl -> UI : afficherErreur("Pseudo indisponible")
+    UI -> User : Message d'erreur
+else Délai expiré (Pseudo libre)
+    Ctrl -> Ctrl : validerPseudo()
+    Ctrl -> UI : afficherSucces()
+    UI -> User : Interface principale débloquée
+end
+
+deactivate Ctrl
+deactivate UI
+@enduml
+
+Cas d'utilisation 2 : Démarrer une session et consulter l'historique
+
+@startuml
+title CU2 - Démarrage de session et Historique (Boîte Blanche)
+
+actor Utilisateur as User
+participant "IHM" as UI
+participant "Controleur" as Ctrl
+participant "GestionnaireDonnees" as DB
+
+User -> UI : Sélectionner utilisateur distant (ex: "Bob")
+activate UI
+UI -> Ctrl : demarrerSession("Bob")
+activate Ctrl
+
+Ctrl -> DB : recupererHistorique("Bob")
+activate DB
+DB --> Ctrl : listeMessages
+deactivate DB
+
+Ctrl -> Ctrl : instancierVueSession(listeMessages)
+Ctrl -> UI : afficherSession(listeMessages)
+UI --> User : Fenêtre de chat avec historique affiché
+
+deactivate Ctrl
+deactivate UI
+@enduml
+
+Cas d'utilisation 3 : Échanger du contenu (Envoi et réception d'un message)
+
+@startuml
+title CU3 - Échange de message textuel (Boîte Blanche)
+
+actor "Utilisateur Local" as User
+participant "IHM" as UI
+participant "Controleur" as Ctrl
+participant "GestionnaireDonnees" as DB
+participant "GestionnaireReseau" as Net
+participant "Agent Distant (Réseau)" as Remote
+
+== Phase d'envoi ==
+User -> UI : Taper message + "Envoyer"
+activate UI
+UI -> Ctrl : traiterMessage(texte, destinataire)
+activate Ctrl
+
+Ctrl -> Ctrl : horodaterMessage() 
+note right : Ajout du timestamp [CdC-Bs-11]
+
+Ctrl -> DB : sauvegarderMessageLocal(msg)
+activate DB
+DB --> Ctrl : OK
+deactivate DB
+
+Ctrl -> Net : envoyerMessage(msg, IP_destinataire)
+activate Net
+Net ->> Remote : Envoi TCP (Asynchrone)
+deactivate Net
+Ctrl -> UI : majAffichage(msg)
+UI --> User : Message affiché dans la bulle de chat
+deactivate Ctrl
+deactivate UI
+
+== Phase de réception (sur l'agent distant) ==
+Remote ->> Net : Reception paquet TCP (Asynchrone)
+activate Net
+Net -> Ctrl : onMessageRecu(msg)
+deactivate Net
+activate Ctrl
+
+Ctrl -> DB : sauvegarderMessageDistant(msg)
+activate DB
+DB --> Ctrl : OK
+deactivate DB
+
+Ctrl -> UI : afficherNouveauMessage(msg)
+activate UI
+UI --> User : Affichage du message avec horodatage
+deactivate UI
+deactivate Ctrl
+
+@enduml
