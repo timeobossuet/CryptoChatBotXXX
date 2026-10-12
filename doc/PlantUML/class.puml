@@ -1,4 +1,4 @@
-@startuml
+@startuml class
 title TD8 - Diagramme de Classes (Boîte Blanche)
 skinparam classAttributeIconSize 0
 skinparam class {

@@ -1,5 +1,5 @@
 Machine à états du ControleurSession
-@startuml
+@startuml statemachineSession
 title Machine à États - ControleurSession
 skinparam state {
     BackgroundColor White
@@ -49,7 +49,7 @@ state Connecte {
 Connecte --> [*] : [VuePrincipale : fermer agent] / arreterReseau()
 @enduml
 Machine à états du GestionnaireReseau
-@startuml
+@startuml statemachineNetwork
 title Machine à États - GestionnaireReseau
 skinparam state {
     BackgroundColor White

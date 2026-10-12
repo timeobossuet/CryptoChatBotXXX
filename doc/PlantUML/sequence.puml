@@ -1,6 +1,6 @@
 Cas d'utilisation 1 : Gérer son pseudonyme (avec vérification d'unicité)
 
-@startuml
+@startuml squencePseudo
 title CU1 - Choix et vérification du pseudonyme (Boîte Blanche)
 
 actor Utilisateur as User
@@ -43,7 +43,7 @@ deactivate UI
 
 Cas d'utilisation 2 : Démarrer une session et consulter l'historique
 
-@startuml
+@startuml sequenceSession
 title CU2 - Démarrage de session et Historique (Boîte Blanche)
 
 actor Utilisateur as User
@@ -71,7 +71,7 @@ deactivate UI
 
 Cas d'utilisation 3 : Échanger du contenu (Envoi et réception d'un message)
 
-@startuml
+@startuml sequenceExchange
 title CU3 - Échange de message textuel (Boîte Blanche)
 
 actor "Utilisateur Local" as User

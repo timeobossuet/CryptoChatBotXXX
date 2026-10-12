@@ -1,4 +1,4 @@
-@startuml
+@startuml composit
 title TD9 - Diagramme de Structure Composite (Agent Local)
 skinparam componentStyle rectangle
 skinparam component {
