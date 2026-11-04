@@ -5,41 +5,52 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
-public class UDPSender {
-    public final int PORT = 19132;
-    public final int BUF_SIZE = 256;
+public class UDPSender 
+{
+    private final NetworkManager network;
 
-    /**
-     * Envoi une demande de découverte sur le réseau local via UDP pour savoir qui est connecté.
-     */
-    public void broadcastPresence(String userName) {
-        byte[] buf = userName.getBytes(StandardCharsets.UTF_8); // Allocation du buffer
-        try (DatagramSocket socket = new DatagramSocket()) { // garantit la fermeture du socket même en cas d'erreur
-            socket.setBroadcast(true);
-            InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
-            DatagramPacket packet = new DatagramPacket(buf, BUF_SIZE, broadcastAddress, PORT);
-            socket.send(packet);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Erreur inattendue lors du broadcast", e);
-        }
+    public UDPSender(NetworkManager network) 
+    {
+        this.network = network;
     }
 
-
     /**
      * Envoi une demande de découverte sur le réseau local via UDP pour savoir qui est connecté.
      */
-    public void sendMessage(String adress, String message) {
+    public void broadcastPresence() 
+    {
+        this.sendBroadcastMessage("NEWUSER: " + this.network.getUsername());
+    }
+
+    /**
+     * Envoi une réponse.
+     */
+    public void broadcastPresence(String address) 
+    {
+        this.sendMessage(address, "OK_ME: " + this.network.getUsername());
+    }
+
+    private void sendBroadcastMessage(String message) 
+    {
+        this.sendMessage("255.255.255.255", message);
+    }
+
+    /**
+     * Envoi un message.
+     */
+    private void sendMessage(String address, String message) {
         byte[] buf = message.getBytes(StandardCharsets.UTF_8); // Allocation du buffer
         try (DatagramSocket socket = new DatagramSocket()) { // garantit la fermeture du socket même en cas d'erreur
             socket.setBroadcast(true);
-            InetAddress broadcastAddress = InetAddress.getByName(adress);
-            DatagramPacket packet = new DatagramPacket(buf, BUF_SIZE, broadcastAddress, PORT);
+            InetAddress broadcastAddress = InetAddress.getByName(address);
+            DatagramPacket packet = new DatagramPacket(
+                buf, this.network.getConfig().getBufferSize(), 
+                broadcastAddress, this.network.getConfig().getUdpPort()
+            );
             socket.send(packet);
         }
         catch (Exception e) {
-            throw new RuntimeException("Erreur inattendue lors du broadcast", e);
+            throw new RuntimeException("[" + this.getClass().getName() + "] Erreur inattendue lors du broadcast", e);
         }
     }
-
 }

@@ -1,39 +1,65 @@
 package org.cryptochatbotxxx.network;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.nio.charset.StandardCharsets;
 
-public class UDPListener {
+public class UDPListener 
+{
 
-    public final int PORT = 19132;
+    private final NetworkManager network;
+    private volatile boolean running = true;
+    private DatagramSocket socket;
 
-    public void presenceListener() {
-        try{
-            DatagramSocket socket = new DatagramSocket(PORT); // On which port is the server listening? ;
-            boolean running = true;
-            byte[] buf = new byte[256]; // What is the maximum size of a received message?
+    public UDPListener(NetworkManager network) 
+    {
+        this.network = network;
+    }
 
-            while (running) {
-                // Which lines are responsible for receiving messages?
-                DatagramPacket inPacket  = new DatagramPacket(buf, buf.length);
-                socket.receive(inPacket); // Bocking operations
-                String received = new String(inPacket.getData(), 0, inPacket.getLength());
+    public void handleListener() 
+    {
+        try
+        {
+            this.socket = new DatagramSocket(this.network.getConfig().getUdpPort());
+            byte[] buf = new byte[this.network.getConfig().getBufferSize()]; // What is the maximum size of a received message?
 
-                // What does the server do when a message is received?
-                System.out.println("Greetings, " + received);
+            while (this.running) {
+                DatagramPacket inPacket = new DatagramPacket(buf, buf.length);
+                socket.receive(inPacket);
+
+                String received = new String(inPacket.getData(), 0, inPacket.getLength(), StandardCharsets.UTF_8);
 
                 if(received.equals("end")){
-                    running = false;
+                    this.running = false;
                     continue;
                 }
 
-                socket.close();
+                if(received.startsWith("NEWUSER:")) {
+                    String username = received.substring("NEWUSER: ".length());
+                    if(username.equalsIgnoreCase(this.network.getUsername()) ) {
+                        this.network.addOnlineUser(username, inPacket.getAddress());
+                    }
+                } else if (received.startsWith("OK_ME:")) {
+                    String username = received.substring("OK_ME: ".length());
+                    if(username.equalsIgnoreCase(this.network.getUsername()) ) {
+                        this.network.addOnlineUser(username, inPacket.getAddress());
+                    }
+                } else {
+                    System.out.println("[" + this.getClass().getName() + "] Packet: " + received);
+                }
             }
+        } catch (IOException e) {
+            this.stop();
+            throw new RuntimeException("[" + this.getClass().getName() + "] " + e);
         }
-        catch (Exception e) {
-                throw new RuntimeException(e);
-        }
-
     }
 
+    public void stop() 
+    {
+        this.running = false;
+        if(this.socket != null) {
+            this.socket.disconnect();
+        }
+    }
 }
