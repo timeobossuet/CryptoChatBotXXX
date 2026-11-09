@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+
+import org.cryptochatbotxxx.network.utils.User;
 
 public class UDPListener 
 {
@@ -28,25 +31,66 @@ public class UDPListener
                 DatagramPacket inPacket = new DatagramPacket(buf, buf.length);
                 socket.receive(inPacket);
 
-                String received = new String(inPacket.getData(), 0, inPacket.getLength(), StandardCharsets.UTF_8);
-
-                if(received.equals("end")){
-                    this.running = false;
+                if(inPacket.getAddress().getHostAddress().equalsIgnoreCase(this.socket.getInetAddress().getHostAddress())) {
                     continue;
                 }
 
-                if(received.startsWith("NEWUSER:")) {
-                    String username = received.substring("NEWUSER: ".length());
-                    if(username.equalsIgnoreCase(this.network.getUsername()) ) {
-                        this.network.addOnlineUser(username, inPacket.getAddress());
-                    }
-                } else if (received.startsWith("OK_ME:")) {
-                    String username = received.substring("OK_ME: ".length());
-                    if(username.equalsIgnoreCase(this.network.getUsername()) ) {
-                        this.network.addOnlineUser(username, inPacket.getAddress());
-                    }
-                } else {
-                    System.out.println("[" + this.getClass().getName() + "] Packet: " + received);
+                String received = new String(inPacket.getData(), 0, inPacket.getLength(), StandardCharsets.UTF_8);
+
+                String usernameAndTimestamp;
+                String username;
+                Instant dateCreation;
+                User user;
+
+                switch (received) {
+                    case String r when r.equals("end"):
+                        this.running = false;
+                        break;
+                    case String r when r.startsWith("NEWUSER:"):
+                        usernameAndTimestamp = received.substring("NEWUSER: ".length());
+                        username = usernameAndTimestamp.substring(0, usernameAndTimestamp.indexOf("+"));
+                        dateCreation = Instant.parse(usernameAndTimestamp.substring(usernameAndTimestamp.indexOf("+")+1));
+
+                        user = new User(username, inPacket.getAddress(), dateCreation);
+                        this.network.addOnlineUser(username, user);
+                        this.network.getUDPSender().respondPresence(inPacket.getAddress().getHostAddress());
+                        break;
+                    case String r when r.startsWith("OK_ME:"):
+                        usernameAndTimestamp = received.substring("OK_ME: ".length());
+                        username = usernameAndTimestamp.substring(0, usernameAndTimestamp.indexOf("+"));
+                        dateCreation = Instant.parse(usernameAndTimestamp.substring(usernameAndTimestamp.indexOf("+")+1));
+
+                        user = new User(username, inPacket.getAddress(), dateCreation);
+                        this.network.addOnlineUser(username, user);
+                        break;
+                    case String r when r.startsWith("TRY_USERNAME:"):
+                        usernameAndTimestamp = received.substring("TRY_USERNAME: ".length());
+                        username = usernameAndTimestamp.substring(0, usernameAndTimestamp.indexOf("+"));
+                        dateCreation = Instant.parse(usernameAndTimestamp.substring(usernameAndTimestamp.indexOf("+")+1));
+                        if(username.equalsIgnoreCase(this.network.getUser().getUsername())) {
+                            if(this.network.getUser().getDateCreation().isBefore(dateCreation)) {
+                                this.network.getUDPSender().respondBadUsername(inPacket.getAddress().getHostAddress());
+                                break;
+                            } else {
+                                if(this.network.getUsernameCanChange()) {
+                                    this.network.setUsernameCantChange();
+                                    this.network.setUsernameNeedToChange();
+                                }
+
+                                // Limitation: Si le packet met trop de temps à parvenir, on rentre dans un problème de concurence de pseudo mais on va dire que ça arrive jamais.
+                            }
+                        }
+                        break;
+                    case String r when r.startsWith("BAD_USERNAME:"):
+                        if(this.network.getUsernameCanChange()) {
+                            this.network.setUsernameCantChange();
+                            this.network.setUsernameNeedToChange();
+                        }
+
+                        // Limitation: Si le packet met trop de temps à parvenir, on rentre dans un problème de concurence de pseudo mais on va dire que ça arrive jamais.
+                        break;
+                    default:
+                        System.out.println("[" + this.getClass().getName() + "] Packet: " + received);
                 }
             }
         } catch (IOException e) {
@@ -59,7 +103,7 @@ public class UDPListener
     {
         this.running = false;
         if(this.socket != null) {
-            this.socket.disconnect();
+            this.socket.close();
         }
     }
 }

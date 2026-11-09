@@ -4,6 +4,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 public class UDPSender 
 {
@@ -19,15 +20,25 @@ public class UDPSender
      */
     public void broadcastPresence() 
     {
-        this.sendBroadcastMessage("NEWUSER: " + this.network.getUsername());
+        this.sendBroadcastMessage("NEWUSER: " + this.network.getUser().getUsername() + "+" + Instant.now().toString());
     }
 
     /**
      * Envoi une réponse.
      */
-    public void broadcastPresence(String address) 
+    public void respondPresence(String address) 
     {
-        this.sendMessage(address, "OK_ME: " + this.network.getUsername());
+        this.sendMessage(address, "OK_ME: " + this.network.getUser().getUsername() + "+" + Instant.now().toString());
+    }
+
+    public void broadcastTryUsername() 
+    {
+        this.sendBroadcastMessage("TRY_USERNAME: " + this.network.getUser().getUsername() + "+" + Instant.now().toString());
+    }
+
+    public void respondBadUsername(String address) 
+    {
+        this.sendMessage(address, "BAD_USERNAME: " + this.network.getUser().getUsername() + "+" + Instant.now().toString());
     }
 
     private void sendBroadcastMessage(String message) 
@@ -44,7 +55,7 @@ public class UDPSender
             socket.setBroadcast(true);
             InetAddress broadcastAddress = InetAddress.getByName(address);
             DatagramPacket packet = new DatagramPacket(
-                buf, this.network.getConfig().getBufferSize(), 
+                buf, buf.length, 
                 broadcastAddress, this.network.getConfig().getUdpPort()
             );
             socket.send(packet);
