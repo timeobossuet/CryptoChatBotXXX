@@ -1,13 +1,12 @@
 package org.cryptochatbotxxx.network;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.cryptochatbotxxx.network.utils.NetworkUtils;
 import org.cryptochatbotxxx.network.utils.User;
 
 public class NetworkManager {
@@ -26,15 +25,7 @@ public class NetworkManager {
 
     public NetworkManager(int n, String username) 
     {
-
-        InetAddress address;
-        try {
-            address = InetAddress.getLocalHost();
-        } catch(UnknownHostException e) {
-            address = InetAddress.getLoopbackAddress();
-        }
-
-        this.user = new User(username, address, Instant.now());
+        this.user = new User(username, NetworkUtils.getLocalIPAdress(), Instant.now());
         this.threadPool = Executors.newFixedThreadPool(n);
         this.config = new NetworkConfig();
         this.udpListener = new UDPListener(this);
@@ -48,7 +39,8 @@ public class NetworkManager {
 
     public void stop() 
     {
-        this.threadPool.shutdown();
+        this.udpListener.stop();
+        this.threadPool.shutdownNow();
     }
 
     public void setUsername(String username, Instant dateCreation) 

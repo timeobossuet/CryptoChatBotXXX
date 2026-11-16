@@ -3,8 +3,10 @@ package org.cryptochatbotxxx;
 import java.time.Instant;
 
 import org.cryptochatbotxxx.network.NetworkManager;
+import org.cryptochatbotxxx.network.utils.User;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import static javafx.geometry.HPos.RIGHT;
@@ -62,16 +64,21 @@ public class App extends Application {
             @Override
             public void handle(ActionEvent e) {
 
+                User old = network.getUser();
                 network.setUsername(userTextField.getText(), Instant.now());
-                network.getUDPSender().broadcastTryUsername();
+                network.setUsernameDoesntNeedToChange();
                 network.setUsernameCanChange();
+                network.getUDPSender().broadcastTryUsername();
 
                 network.getThreadPool().submit(() -> {
                     try {
                         Thread.sleep(1000);
                         if(network.getUsernameNeedToChange()) {
-                            actiontarget.setFill(Color.FIREBRICK);
-                            actiontarget.setText("Pseudo déjà pris, change le");
+                            network.setUsername(old.getUsername(), old.getDateCreation());
+                            Platform.runLater(() -> {
+                                actiontarget.setFill(Color.FIREBRICK);
+                                actiontarget.setText("Pseudo déjà pris, change le");
+                            });
                         } else {
                             System.out.println("[App] Bienvenu : " + userTextField.getText());
                             network.getUDPSender().broadcastPresence();
@@ -86,6 +93,12 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    
+    @Override 
+    public void stop() 
+    {
+        network.stop();
+    } 
 
     public static void main(String[] args) {
         network = new NetworkManager(2, "unknown");
