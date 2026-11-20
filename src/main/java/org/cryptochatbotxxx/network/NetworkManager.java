@@ -7,12 +7,13 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.cryptochatbotxxx.config.NetworkConfig;
 import org.cryptochatbotxxx.network.utils.NetworkUtils;
 import org.cryptochatbotxxx.network.utils.User;
 
 public class NetworkManager {
 
-	private final ExecutorService threadPool;
+    private final ExecutorService threadPool;
     private final NetworkConfig config;
 
     private final UDPListener udpListener;
@@ -24,17 +25,22 @@ public class NetworkManager {
     private volatile boolean usernameCanChange = false;
     private volatile boolean usernameNeedToChange = false;
 
-    public NetworkManager(int n, String username) 
+    public NetworkManager(int n, String username, NetworkConfig config) 
     {
         this.user = new User(username, NetworkUtils.getLocalIPAddress(), Instant.now());
         this.threadPool = Executors.newFixedThreadPool(n);
-        this.config = new NetworkConfig();
+        this.config = config;
         this.udpListener = new UDPListener(this);
         this.udpSender = new UDPSender(this);
     }
 
+    public NetworkManager(int n, String username) 
+    {
+        this(n, username, new NetworkConfig());
+    }
+
     public void start() 
-	{
+    {
         this.threadPool.submit(this.udpListener::handleListener);
     }
 
@@ -50,20 +56,20 @@ public class NetworkManager {
     }
 
     public void addOnlineUser(User user) 
-	{
+    {
         this.onlineUsers.put(user.getAddress(), user);
         System.out.println(
-			"[" + this.getClass().getName() + "] Utilisateur en ligne détecté : " 
-			+ user.getUsername() + " (" + user.getAddress().getHostAddress() + ")"
-		);
+            "[" + this.getClass().getName() + "] Utilisateur en ligne détecté : " 
+            + user.getUsername() + " (" + user.getAddress().getHostAddress() + ")"
+        );
     }
 
-	public void removeOnlineUser(InetAddress address) 
-	{
-		if(this.onlineUsers.containsKey(address)) {
-			this.onlineUsers.remove(address);
-		}
-	}
+    public void removeOnlineUser(InetAddress address) 
+    {
+        if(this.onlineUsers.containsKey(address)) {
+            this.onlineUsers.remove(address);
+        }
+    }
 
     public Optional<String> existsUsername(String username) 
     {

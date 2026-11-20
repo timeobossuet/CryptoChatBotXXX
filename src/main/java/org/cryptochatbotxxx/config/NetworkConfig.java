@@ -1,9 +1,7 @@
-package org.cryptochatbotxxx.network;
+package org.cryptochatbotxxx.config;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
-
-import org.cryptochatbotxxx.config.ConfigReader;
 
 public class NetworkConfig {
 
