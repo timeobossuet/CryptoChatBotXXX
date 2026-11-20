@@ -7,7 +7,7 @@ import java.util.Enumeration;
 
 public class NetworkUtils 
 {
-    public static InetAddress getLocalIPAdress() 
+    public static InetAddress getLocalIPAddress() 
     {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
