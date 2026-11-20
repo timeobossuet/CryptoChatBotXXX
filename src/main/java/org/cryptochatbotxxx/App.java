@@ -65,6 +65,9 @@ public class App extends Application {
             public void handle(ActionEvent e) {
 
                 User old = network.getUser();
+
+                actiontarget.setText("");
+
                 network.setUsername(userTextField.getText(), Instant.now());
                 network.setUsernameDoesntNeedToChange();
                 network.setUsernameCanChange();
