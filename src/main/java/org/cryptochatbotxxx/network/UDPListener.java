@@ -56,7 +56,7 @@ public class UDPListener
                             dateCreation = Instant.parse(usernameAndTimestamp.substring(usernameAndTimestamp.indexOf("+")+1));
 
                             user = new User(username, inPacket.getAddress(), dateCreation);
-                            this.network.addOnlineUser(username, user);
+                            this.network.addOnlineUser(user);
                             this.network.getUDPSender().respondPresence(inPacket.getAddress().getHostAddress());
                             break;
                         case String r when r.startsWith("OK_ME:"):
@@ -65,7 +65,7 @@ public class UDPListener
                             dateCreation = Instant.parse(usernameAndTimestamp.substring(usernameAndTimestamp.indexOf("+")+1));
 
                             user = new User(username, inPacket.getAddress(), dateCreation);
-                            this.network.addOnlineUser(username, user);
+                            this.network.addOnlineUser(user);
                             break;
                         case String r when r.startsWith("TRY_USERNAME:"):
                             usernameAndTimestamp = received.substring("TRY_USERNAME: ".length());

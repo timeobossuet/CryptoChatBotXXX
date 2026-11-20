@@ -1,5 +1,6 @@
 package org.cryptochatbotxxx.network;
 
+import java.net.InetAddress;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Optional;
@@ -18,7 +19,7 @@ public class NetworkManager {
     private final UDPSender udpSender;
 
     private User user;
-    private final HashMap<String, User> onlineUsers = new HashMap<>();
+    private final HashMap<InetAddress, User> onlineUsers = new HashMap<>();
 
     private volatile boolean usernameCanChange = false;
     private volatile boolean usernameNeedToChange = false;
@@ -48,25 +49,25 @@ public class NetworkManager {
         this.user = new User(username, this.getUser().getAddress(), dateCreation);
     }
 
-    public void addOnlineUser(String userName, User user) 
+    public void addOnlineUser(User user) 
 	{
-        this.onlineUsers.put(userName, user);
+        this.onlineUsers.put(user.getAddress(), user);
         System.out.println(
 			"[" + this.getClass().getName() + "] Utilisateur en ligne détecté : " 
-			+ userName + " (" + user.getAddress().getHostAddress() + ")"
+			+ user.getUsername() + " (" + user.getAddress().getHostAddress() + ")"
 		);
     }
 
-	public void removeOnlineUser(String userName) 
+	public void removeOnlineUser(InetAddress address) 
 	{
-		if(this.onlineUsers.containsKey(userName)) {
-			this.onlineUsers.remove(userName);
+		if(this.onlineUsers.containsKey(address)) {
+			this.onlineUsers.remove(address);
 		}
 	}
 
     public Optional<String> existsUsername(String username) 
     {
-        return this.onlineUsers.keySet().stream().filter(k -> username.equalsIgnoreCase(k)).findFirst();
+        return this.onlineUsers.values().stream().map(User::getUsername).filter(k -> username.equalsIgnoreCase(k)).findFirst();
     }
 
     public void setUsernameCanChange() 
@@ -118,7 +119,7 @@ public class NetworkManager {
         return user;
     }
 
-    public HashMap<String, User> getOnlineUsers() 
+    public HashMap<InetAddress, User> getOnlineUsers() 
     { 
         return onlineUsers;
     }
