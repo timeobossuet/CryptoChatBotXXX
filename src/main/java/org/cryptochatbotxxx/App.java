@@ -104,7 +104,7 @@ public class App extends Application {
     } 
 
     public static void main(String[] args) {
-        network = new NetworkManager(2, "unknown");
+        network = new NetworkManager(2, "+unknown");
         network.start();
         launch(args);
     }
