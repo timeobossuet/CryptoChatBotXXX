@@ -1,5 +1,6 @@
 package org.cryptochatbotxxx.network.utils;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
@@ -21,11 +22,9 @@ public class NetworkUtils
                 while(addresses.hasMoreElements()) {
                     InetAddress address = addresses.nextElement();
 
-                    if(address.isLoopbackAddress() || address.isLinkLocalAddress()) {
-                        continue;
+                    if(!address.isLoopbackAddress() && !address.isLinkLocalAddress() && address instanceof Inet4Address) {
+                        return address;
                     }
-
-                    return address;
                 } 
             } 
         } catch (Exception e) {}
