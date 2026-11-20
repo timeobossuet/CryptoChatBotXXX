@@ -25,7 +25,7 @@ public class NetworkManager {
 
     public NetworkManager(int n, String username) 
     {
-        this.user = new User(username, NetworkUtils.getLocalIPAdress(), Instant.now());
+        this.user = new User(username, NetworkUtils.getLocalIPAddress(), Instant.now());
         this.threadPool = Executors.newFixedThreadPool(n);
         this.config = new NetworkConfig();
         this.udpListener = new UDPListener(this);
