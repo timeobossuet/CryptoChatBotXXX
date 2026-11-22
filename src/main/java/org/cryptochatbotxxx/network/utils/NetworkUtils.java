@@ -9,26 +9,44 @@ import java.util.Enumeration;
 
 public class NetworkUtils 
 {
+    /**
+     * Gets the current local IP
+     * Prefers : IPv4 over loopback or linklocal
+     * If none : returns loop-back addr
+     */
     public static InetAddress getLocalIPAddress() 
     {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while(interfaces.hasMoreElements()) {
+            // if no interface
+            if (interfaces == null) {
+                return InetAddress.getLoopbackAddress();
+            }
+
+            while(interfaces.hasMoreElements()) 
+            {
                 NetworkInterface i = interfaces.nextElement();
+
+                // ignores inactive interfaces
                 if(!i.isUp() || i.isLoopback()) {
                     continue;
                 }
 
                 Enumeration<InetAddress> addresses = i.getInetAddresses();
-                while(addresses.hasMoreElements()) {
+
+                while(addresses.hasMoreElements()) 
+                {
                     InetAddress address = addresses.nextElement();
 
+                    // Prefer a routable IPv4 address over loopback or link-local (169.254.x.x)
                     if(!address.isLoopbackAddress() && !address.isLinkLocalAddress() && address instanceof Inet4Address) {
                         return address;
                     }
                 } 
             } 
-        } catch (SocketException e) {}
+        } catch (SocketException e) {
+            System.err.println("Failed to inspect network interfaces: " + e.getMessage());
+        }
 
         return InetAddress.getLoopbackAddress();
     } 

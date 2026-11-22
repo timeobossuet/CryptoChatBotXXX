@@ -1,4 +1,4 @@
-package org.cryptochatbotxxx.network.utils;
+package org.cryptochatbotxxx.network;
 
 import java.net.InetAddress;
 import java.time.Instant;
@@ -16,18 +16,7 @@ public class User
         this.dateCreation = dateCreation;
     }
 
-    public String getUsername() 
-    {
-        return username;
-    }
-
-    public InetAddress getAddress() 
-    {
-        return address;
-    }
-
-    public Instant getDateCreation() 
-    {
-        return dateCreation;
-    }
+    public String getUsername() { return username; }
+    public InetAddress getAddress() { return address; }
+    public Instant getDateCreation() { return dateCreation; }
 }
